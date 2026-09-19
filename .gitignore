@@ -1,1 +1,8 @@
 .DS_Store
+node_modules/
+docs/index.md
+docs/chapter-*/
+docs/zh/
+docs/public/images/
+docs/.vitepress/cache/
+docs/.vitepress/dist/
