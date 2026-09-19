@@ -75,6 +75,22 @@ Cloud providers like Amazon, Google, and Microsoft aim for SLAs (Service Level A
    - **Daily Media Storage:** \( 150M x 2 x 10\% x 1MB = 30TB per day \)
    - **5-Year Storage:** \( 30TB x 365 x 5 = ~55PB \)
 
+3. **Cache Requirements** (extending the same assumptions):
+   - **Extra assumption:** each DAU reads 100 tweets/day, and the Pareto rule applies (20% of tweets serve 80% of reads).
+   - **Daily reads:** \( 150M x 100 = 15B \) tweet reads per day
+   - **Read QPS:** \( 15B / 86400 = ~175,000 \); Peak read QPS = \( 2 x 175,000 = ~350,000 \)
+   - **Text size per tweet:** `tweet_id` + `text` = 64 + 140 = ~200 bytes (media is served from a CDN, not cached here)
+   - **Data read per day:** \( 15B x 200B = 3TB \)
+   - **Cache only the hot 20%:** \( 3TB x 20\% = ~600GB \)
+   - **Machines:** with ~64GB of usable memory per cache node, \( 600GB / 64GB = ~10 \) nodes; round up to ~12 to leave headroom and replicas for hot keys.
+
+4. **Number of Servers:**
+   - **Peak load:** \( 350,000 (read) + 7,000 (write) = ~350,000 QPS \)
+   - **Assumed per-server capacity:** ~5,000 QPS (a 16-core app server doing lightweight work; benchmark in practice)
+   - **Servers needed:** \( 350,000 / 5,000 = 70 \)
+   - **Headroom (~30%) for failures and deploys:** \( 70 x 1.3 = ~90 \) servers
+   - **Sanity check:** a cache hit (~100 ns memory read) keeps per-request latency low; if the hit rate dropped, requests would fall to the database and the per-server QPS assumption would no longer hold.
+
 ---
 
 ## Section 3: Tips for Effective Estimation
